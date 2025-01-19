@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
         month: '2-digit',
         year: 'numeric',
     });
+
+    mesInput.value = hoy.getMonth() + 1;
+    yearInput.value = hoy.getFullYear();
     
     document.getElementById('generarFormulario').addEventListener('click', function() {
                 document.getElementById('generar-formulario').style.display = 'block';
@@ -122,9 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
                 tabla.style.display = 'block'; // Mostrar la tabla
             } else {
-                console.error('Error al procesar el archivo en el servidor');
-                alert('No se pudo procesar el archivo.');
+                const error = await response.json()
+                console.error('Error al procesar el archivo en el servidor: \n\n '+ error?.message);
+                alert('No se pudo procesar el archivo.\n\n'+ error?.message);
             }
+            
         } catch (error) {
             console.error('Error al cargar el archivo:', error);
             alert('Ocurrió un error al procesar la solicitud.');

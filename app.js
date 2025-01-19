@@ -5,8 +5,12 @@ import {fileURLToPath} from 'url';
 import fs from 'fs';
 import multer from 'multer';
 import readline from 'readline';
+import { Sequelize } from 'sequelize';
 
+import { Empleado, Transaccion } from './models.js';
 
+import EmpleadoRouter from './routes/empleados.js';
+import TransaccionesRouter from './routes/transacciones.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,11 +23,15 @@ const upload = multer({ dest: 'uploads/' });
 app.use(express.json())
 
 app.get('/api', (req, res) => {
-    console.log('HTTP GET request received')
-    res.send('Hello, World!')
+    res.send('Documentación API!')
 })
 
-app.post('/api/formulario', upload.none(), (req, res) => {
+// Rutas
+app.use('/api/empleados', EmpleadoRouter);
+app.use('/api/transacciones', TransaccionesRouter);
+
+
+app.post('/api/formulario', upload.none(), async (req, res) => {
 
     const { mes, year, numeroCuenta, fechaCreacion } = req.body;
 
@@ -33,14 +41,11 @@ app.post('/api/formulario', upload.none(), (req, res) => {
         });
     }
 
-    console.log(req.body)
-
     try {
-       
-        const empleados = [
-            { documento: '0012345678', cuenta: '00000000000000000001', salario: 1500000 },
-            { documento: '0012345679', cuenta: '00000000000000000002', salario: 2000000 },
-        ];
+
+        const empleadosDb = await Empleado.findAll();
+        const empleados = empleadosDb.map(empleado => ({ documento: empleado.cedula, cuenta: empleado.cuenta, salario: empleado.salario}))
+        console.log(empleadosDb)
 
         const totalEmpleados = empleados.length;
         const totalMonto = empleados.reduce((acc, emp) => acc + emp.salario, 0);
@@ -93,18 +98,62 @@ app.post('/api/cargar-nomina', upload.single('archivo'), async (req, res) => {
         });
 
         const data = [];
+        const transacciones = [];
+        let cuenta_origen = null;
+
         for await (const line of rl) {
             const partes = line.split('|');
             const tipo = partes[0];
 
-            if (tipo === 'D') {
+            if (tipo === 'E') {
+                cuenta_origen = partes[2];
+
+                const fechaTransaccion = partes[4]; 
+                const [mes, anio] = fechaTransaccion.split('/');
+                let mesTransaccion = mes;
+                let anioTransaccion = anio;
+
+                if (mesTransaccion && anioTransaccion) {
+                    const transaccionExistente = await Transaccion.findOne({
+                        where: {
+                            cuenta_origen, 
+                            [Sequelize.Op.and]: [
+                                Sequelize.where(Sequelize.fn('strftime', '%m', Sequelize.col('fecha_transaccion')), mesTransaccion),
+                                Sequelize.where(Sequelize.fn('strftime', '%Y', Sequelize.col('fecha_transaccion')), anioTransaccion),
+                            ],
+                        },
+                    });
+
+                    if (transaccionExistente) {
+                        return res.status(400).json({ message: 'Ya existe una transacción para el mes y año indicados.' });
+                    }
+                }
+
+            }
+
+            if (tipo === 'D' && cuenta_origen) {
+                const cuenta_destino = partes[2]; 
+                const monto = parseFloat(partes[3]); 
+                const fecha_transaccion = new Date().toISOString();
+
+                // Agregar la transacción a la lista
+                transacciones.push({
+                    cuenta_origen,
+                    cuenta_destino,
+                    monto,
+                    fecha_transaccion
+                });
+
                 data.push({
                     tipo: 'Empleado',
                     documento: partes[1],
                     cuenta: partes[2],
                     salario: partes[3],
                 });
-            } else if (tipo === 'S') {
+
+            }
+
+            if (tipo === 'S') {
                 data.push({
                     tipo: 'Resumen',
                     documento: null,
@@ -112,16 +161,19 @@ app.post('/api/cargar-nomina', upload.single('archivo'), async (req, res) => {
                     salario: partes[2], 
                 });
             }
+
         }
+
+        const transaccionesGuardadas = await Transaccion.bulkCreate(transacciones);
 
         fs.unlinkSync(filePath);       
         res.status(200).json(data);
+
     } catch (error) {
         console.error('Error al procesar el archivo:', error);
         res.status(500).json({ message: 'Error al procesar el archivo.' });
     }
 });
-
 
 app.use(express.static(path.join(__dirname, '/public')));
 
