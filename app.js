@@ -18,7 +18,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors())
 
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 app.use(express.json())
 
@@ -100,6 +111,7 @@ app.post('/api/cargar-nomina', upload.single('archivo'), async (req, res) => {
         const data = [];
         const transacciones = [];
         let cuenta_origen = null;
+        let fecha = null;
 
         for await (const line of rl) {
             const partes = line.split('|');
@@ -112,6 +124,8 @@ app.post('/api/cargar-nomina', upload.single('archivo'), async (req, res) => {
                 const [mes, anio] = fechaTransaccion.split('/');
                 let mesTransaccion = mes;
                 let anioTransaccion = anio;
+
+                fecha = new Date(parseInt(anio, 10), parseInt(mes, 10) - 1, 1);
 
                 if (mesTransaccion && anioTransaccion) {
                     const transaccionExistente = await Transaccion.findOne({
@@ -131,10 +145,10 @@ app.post('/api/cargar-nomina', upload.single('archivo'), async (req, res) => {
 
             }
 
-            if (tipo === 'D' && cuenta_origen) {
+            if (tipo === 'D' && cuenta_origen && fecha) {
                 const cuenta_destino = partes[2]; 
                 const monto = parseFloat(partes[3]); 
-                const fecha_transaccion = new Date().toISOString();
+                const fecha_transaccion = fecha.toISOString();
 
                 // Agregar la transacción a la lista
                 transacciones.push({
