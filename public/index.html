@@ -1,19 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <h1 class="heading">Note App</h1>
-    <p class="info-text">Double click on a note to remove it</p>
-    <div class="app" id="app">
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Aplicación</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="#generar-formulario" id="generarFormulario">Generar Formulario</a></li>
+            <li><a href="#cargar-nomina" id="cargarNomina">Cargar Nómina</a></li>
+        </ul>
+    </nav>
 
-      <button class="btn" id="btn">+</button>
+    <section class="body-container">
+
+      
+    <div id="generar-formulario" class="form-container">
+        <h2>Generar Formulario</h2>
+        <form id="formulario">
+            <label for="fecha">Fecha:</label>
+            <input type="date" id="fecha" name="fecha" required>
+            <br>
+            <label for="numeroCuenta">Número de Cuenta:</label>
+            <input type="text" id="numeroCuenta" name="numeroCuenta" required>
+            <br>
+            <button type="submit">Enviar</button>
+        </form>
     </div>
+
+    <div id="cargar-nomina" class="form-container" style="display:none;">
+        <h2>Cargar Nómina</h2>
+    <p>Aquí puedes cargar la nómina.</p>
+    <form id="form-cargar-nomina" enctype="multipart/form-data">
+        <label for="archivo-nomina">Selecciona el archivo:</label>
+        <input type="file" id="archivo-nomina" name="archivo" accept=".txt" required>
+        <button type="submit">Cargar</button>
+    </form>
+    <table id="tabla-nomina" border="1" style="margin-top: 20px; display: none;">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Documento</th>
+                <th>Cuenta</th>
+                <th>Salario</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    </div>
+
+    </section>
+
     <script src="index.js"></script>
-  </body>
+</body>
 </html>
