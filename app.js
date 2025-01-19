@@ -24,38 +24,31 @@ app.get('/api', (req, res) => {
 })
 
 app.post('/api/formulario', upload.none(), (req, res) => {
-    const { fecha, numeroCuenta } = req.body;
-    console.log(req.body)
-    console.log('Datos recibidos:', { fecha, numeroCuenta });
 
-    if (!fecha || !numeroCuenta) {
+    const { mes, year, numeroCuenta, fechaCreacion } = req.body;
+
+    if (!mes || !year || !numeroCuenta || !fechaCreacion) {
         return res.status(400).json({
-            message: 'La fecha y el número de cuenta son requeridos.',
+            message: 'Todos los campos son requeridos.',
         });
     }
 
+    console.log(req.body)
+
     try {
-        // Datos de ejemplo (estos podrían venir de una base de datos o similar)
+       
         const empleados = [
             { documento: '0012345678', cuenta: '00000000000000000001', salario: 1500000 },
             { documento: '0012345679', cuenta: '00000000000000000002', salario: 2000000 },
         ];
 
-        // Calcular la cantidad de empleados y el monto total
         const totalEmpleados = empleados.length;
         const totalMonto = empleados.reduce((acc, emp) => acc + emp.salario, 0);
 
-        // Fecha actual para el archivo
-        const fechaArchivo = new Date().toLocaleDateString('es-DO', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        });
+        const fechaArchivo = fechaCreacion;
 
-        const [year, month] = fecha.split('-');
-        const fechaFormateada = `${month}/${year}`;
+        const fechaFormateada = `${mes.padStart(2, '0')}/${year}`;
 
-        // Generar el contenido del archivo
         let contenido = `E|401005107|${numeroCuenta}|${fechaArchivo}|${fechaFormateada}\n`;
 
         empleados.forEach((emp) => {
@@ -64,21 +57,20 @@ app.post('/api/formulario', upload.none(), (req, res) => {
 
         contenido += `S|${totalEmpleados}|${totalMonto}`;
 
-        // Guardar el archivo en el servidor
-        const fileName = `formulario_unapec.txt`;
+        const fileName = `nomina_unapec.txt`;
         const filePath = path.join(__dirname, fileName);
         fs.writeFileSync(filePath, contenido);
 
-        // Enviar el archivo al cliente
         res.download(filePath, fileName, (err) => {
+            
             if (err) {
                 console.error('Error al enviar el archivo:', err);
                 res.status(500).json({ message: 'Error al generar el archivo.' });
             }
 
-            // Eliminar el archivo después de enviarlo
             fs.unlinkSync(filePath);
         });
+
     } catch (error) {
         console.error('Error en el procesamiento:', error);
         res.status(500).json({ message: 'Error interno del servidor.' });
@@ -116,16 +108,13 @@ app.post('/api/cargar-nomina', upload.single('archivo'), async (req, res) => {
                 data.push({
                     tipo: 'Resumen',
                     documento: null,
-                    cuenta: partes[1], // Número total de empleados
-                    salario: partes[2], // Monto total
+                    cuenta: partes[1], 
+                    salario: partes[2], 
                 });
             }
         }
 
-        // Eliminar el archivo después de procesarlo
-        fs.unlinkSync(filePath);
-
-        // Devolver los datos al cliente
+        fs.unlinkSync(filePath);       
         res.status(200).json(data);
     } catch (error) {
         console.error('Error al procesar el archivo:', error);
