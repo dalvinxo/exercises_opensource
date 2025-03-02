@@ -11,7 +11,7 @@ Este proyecto implementa una solución para la integración del pago de nómina 
 
 ## Tecnologías Utilizadas
 - **Backend:** Node.js con Express.
-- **Base de Datos:** Sequelize con soporte para PostgreSQL o MySQL.
+- **Base de Datos:** Sequelize con soporte para SQLITE o MySQL.
 - **Frontend:** HTML, CSS y JavaScript.
 - **APIs RESTful:** Para la comunicación entre Unapec y APAP.
 
@@ -24,28 +24,15 @@ Este proyecto implementa una solución para la integración del pago de nómina 
 ### Pasos de Instalación
 1. Clonar el repositorio:
    ```sh
-   git clone https://github.com/tu-repositorio.git
-   cd nombre-del-proyecto
+   git clone https://github.com/dalvinxo/exercises_opensource.git
+   cd exercises_opensource
    ```
 2. Instalar dependencias:
    ```sh
    npm install
    ```
-3. Configurar la base de datos en el archivo `.env`:
-   ```env
-   DB_HOST=localhost
-   DB_USER=usuario
-   DB_PASS=contraseña
-   DB_NAME=nombre_base_datos
-   ```
-4. Ejecutar las migraciones:
-   ```sh
-   npx sequelize db:migrate
-   ```
-5. Iniciar el servidor:
-   ```sh
-   npm start
-   ```
+3. Configurar la base de datos en el archivo `https://sequelize.org/docs/v7/databases/sqlite/`:
+
 
 ## Uso
 1. Accede a `http://localhost:3000`.
